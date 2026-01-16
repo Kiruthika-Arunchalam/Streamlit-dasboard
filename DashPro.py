@@ -177,37 +177,37 @@ def build_counts_series_as_df(series, name='count'):
 # ------------------------
 # Load data (upload or local)
 # ------------------------
-st.sidebar.header("Data")
-uploaded = st.sidebar.file_uploader("Upload shipping_schedule_enriched.csv (or .parquet)", type=["csv","parquet"], accept_multiple_files=False)
 
+
+st.sidebar.header("Data")
+
+uploaded = st.sidebar.file_uploader(
+    "Upload shipping_schedule_enriched.csv (or .parquet)",
+    type=["csv", "parquet"],
+    accept_multiple_files=False
+)
 
 df = None
+
 if uploaded is not None:
     try:
         if uploaded.name.endswith(".parquet"):
             df = pd.read_parquet(uploaded)
         else:
-            # read without forcing dtype to preserve booleans
             df = pd.read_csv(uploaded)
     except Exception as e:
         st.sidebar.error(f"Failed to read uploaded file: {e}")
         st.stop()
-elif local_path:
-    if os.path.exists(local_path):
-        try:
-            if local_path.endswith(".parquet"):
-                df = pd.read_parquet(local_path)
-            else:
-                df = pd.read_csv(local_path)
-        except Exception as e:
-            st.sidebar.error(f"Failed to read local file: {e}")
-            st.stop()
-    else:
-        st.sidebar.info("Local path not found.")
 
+# ⛔ STOP execution if df not loaded
 if df is None:
-    st.info("Please upload `shipping_schedule_enriched.csv` (or provide local path) to display charts.")
     st.stop()
+
+
+# ✅ SAFE to touch df from here onward
+df = ensure_unique_cols(df)
+df.columns = [c.strip() for c in df.columns]
+
 
 # Defensive: unique column names & trim whitespace
 df = ensure_unique_cols(df)
